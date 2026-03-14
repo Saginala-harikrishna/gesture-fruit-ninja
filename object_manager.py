@@ -87,9 +87,10 @@ class ObjectManager:
 
         now=time.time()
 
+        # faster spawn rate
         if self.current_object is None:
 
-            if self.pause_time is None or now-self.pause_time>1:
+            if self.pause_time is None or now-self.pause_time>0.12:
                 self.spawn_object()
 
         # update fruit halves
@@ -98,17 +99,17 @@ class ObjectManager:
             piece["x"] += piece["vx"]
             piece["y"] += piece["vy"]
 
-            piece["vy"] += 0.3
+            piece["vy"] += 0.4
 
             draw_png(frame,piece["img"],piece["x"],piece["y"])
 
-        # update splash
+        # splash effect
         for splash in self.splashes:
 
             if now - splash["time"] < 1:
                 draw_png(frame,self.juice,splash["x"],splash["y"])
 
-        # explosion
+        # explosion effect
         for blast in self.explosions:
 
             if now - blast["time"] < 1:
@@ -139,8 +140,9 @@ class ObjectManager:
 
                         left,right = split_fruit(obj["img"])
 
-                        self.slices.append({"img":left,"x":obj["x"],"y":obj["y"],"vx":-5,"vy":-6})
-                        self.slices.append({"img":right,"x":obj["x"],"y":obj["y"],"vx":5,"vy":-6})
+                        # faster slice motion
+                        self.slices.append({"img":left,"x":obj["x"],"y":obj["y"],"vx":-8,"vy":-9})
+                        self.slices.append({"img":right,"x":obj["x"],"y":obj["y"],"vx":8,"vy":-9})
 
                         self.splashes.append({"x":obj["x"],"y":obj["y"],"time":now})
 
