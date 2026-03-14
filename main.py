@@ -122,3 +122,10 @@ while True:
 
 cap.release()
 cv2.destroyAllWindows()
+
+
+
+import json
+
+with open("last_score.json","w") as f:
+    json.dump({"score": object_manager.score}, f)
