@@ -1,32 +1,37 @@
 import cv2
-import mediapipe as mp
-import random
-import math
+import time
 
-# Initialize mediapipe
-mp_hands = mp.solutions.hands
-hands = mp_hands.Hands(
-    max_num_hands=1,
-    min_detection_confidence=0.7,
-    min_tracking_confidence=0.7
-)
+from hand_tracking import HandTracker
+from object_manager import ObjectManager
 
-mp_draw = mp.solutions.drawing_utils
-
-# Start webcam
 cap = cv2.VideoCapture(0)
 
-# Load fruit images
-apple = cv2.imread("assets/fruits/apple.png", cv2.IMREAD_UNCHANGED)
-banana = cv2.imread("assets/fruits/banana.png", cv2.IMREAD_UNCHANGED)
-watermelon = cv2.imread("assets/fruits/watermelon.png", cv2.IMREAD_UNCHANGED)
-orange = cv2.imread("assets/fruits/orange.png", cv2.IMREAD_UNCHANGED)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH,1280)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT,720)
 
-fruit_images = [apple, banana, watermelon, orange]
+hand_tracker = HandTracker()
+object_manager = ObjectManager()
 
-# Game variables
-fruits = []
-score = 0
+game_duration = 60
+start_time = time.time()
+
+cv2.namedWindow("Gesture Fruit Ninja", cv2.WINDOW_NORMAL)
+cv2.setWindowProperty("Gesture Fruit Ninja",
+                      cv2.WND_PROP_FULLSCREEN,
+                      cv2.WINDOW_FULLSCREEN)
+
+close_clicked = False
+
+
+def mouse_click(event,x,y,flags,param):
+    global close_clicked
+    if event == cv2.EVENT_LBUTTONDOWN:
+        if 540 < x < 740 and 420 < y < 500:
+            close_clicked = True
+
+
+cv2.setMouseCallback("Gesture Fruit Ninja", mouse_click)
+
 
 while True:
 
@@ -34,95 +39,60 @@ while True:
     if not success:
         break
 
-    frame = cv2.flip(frame, 1)
+    frame = cv2.flip(frame,1)
 
-    rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    results = hands.process(rgb)
+    elapsed = int(time.time() - start_time)
+    remaining = game_duration - elapsed
 
-    finger_x = None
-    finger_y = None
-
-    # Hand detection
-    if results.multi_hand_landmarks:
-        for hand_landmarks in results.multi_hand_landmarks:
-
-            mp_draw.draw_landmarks(
-                frame,
-                hand_landmarks,
-                mp_hands.HAND_CONNECTIONS
-            )
-
-            index_tip = hand_landmarks.landmark[8]
-
-            h, w, c = frame.shape
-
-            finger_x = int(index_tip.x * w)
-            finger_y = int(index_tip.y * h)
-
-            cv2.circle(frame, (finger_x, finger_y), 10, (0,0,255), -1)
-
-    # Spawn fruits
-    if random.randint(1,20) == 1:
-
-        fruit_img = random.choice(fruit_images)
-
-        x = random.randint(100,500)
-        y = 480
-        speed = random.randint(4,7)
-
-        fruits.append([x, y, speed, fruit_img])
-
-    # Draw fruits
-    for fruit in fruits[:]:
-
-        x, y, speed, img = fruit
-
-        h_img, w_img, _ = img.shape
-
-        x1 = int(x - w_img / 2)
-        y1 = int(y - h_img / 2)
-
-        x2 = x1 + w_img
-        y2 = y1 + h_img
-
-        # Draw fruit image
-        if y1 > 0 and y2 < frame.shape[0] and x1 > 0 and x2 < frame.shape[1]:
-
-            frame[y1:y2, x1:x2] = img[:, :, :3]
-
-        # Move fruit upward
-        fruit[1] -= speed
-
-        # Collision detection
-        if finger_x is not None and finger_y is not None:
-
-            radius = w_img // 2
-
-            distance = math.sqrt((finger_x - x)**2 + (finger_y - y)**2)
-
-            if distance < radius:
-
-                fruits.remove(fruit)
-                score += 1
-
-    # Remove fruits off screen
-    fruits = [fruit for fruit in fruits if fruit[1] > 0]
-
-    # Display score
-    cv2.putText(
-        frame,
-        f"Score: {score}",
-        (20,50),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        1,
-        (0,255,0),
-        2
-    )
-
-    cv2.imshow("Gesture Fruit Ninja", frame)
-
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+    if remaining <= 0:
         break
+
+    finger_x, finger_y = hand_tracker.detect(frame)
+    segment = hand_tracker.get_last_segment()
+
+    frame = object_manager.update(frame,segment)
+
+    hand_tracker.draw_trail(frame)
+
+    cv2.putText(frame,f"Score: {object_manager.score}",(40,60),
+                cv2.FONT_HERSHEY_SIMPLEX,1.2,(0,255,0),3)
+
+    cv2.putText(frame,f"Time: {remaining}",(40,120),
+                cv2.FONT_HERSHEY_SIMPLEX,1.2,(0,255,255),3)
+
+    cv2.imshow("Gesture Fruit Ninja",frame)
+
+    key = cv2.waitKey(1)
+
+    if key == 27:
+        break
+
+
+# GAME OVER SCREEN
+while True:
+
+    ret, frame = cap.read()
+    frame = cv2.flip(frame,1)
+
+    cv2.putText(frame,"GAME OVER",(420,250),
+                cv2.FONT_HERSHEY_SIMPLEX,2.5,(0,0,255),5)
+
+    cv2.putText(frame,f"Final Score: {object_manager.score}",
+                (420,350),
+                cv2.FONT_HERSHEY_SIMPLEX,1.5,(255,255,255),3)
+
+    cv2.rectangle(frame,(540,420),(740,500),(0,0,255),-1)
+
+    cv2.putText(frame,"CLOSE",(565,470),
+                cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),3)
+
+    cv2.imshow("Gesture Fruit Ninja",frame)
+
+    key = cv2.waitKey(1)
+
+    if close_clicked or key == 27:
+        break
+
 
 cap.release()
 cv2.destroyAllWindows()
