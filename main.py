@@ -1,0 +1,1 @@
+print("Gesture Fruit Ninja Project Started")
