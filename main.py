@@ -41,16 +41,18 @@ start_time = None
 
 start_clicked = False
 close_clicked = False
+stop_clicked = False
 
 recorder = None
 
 
 def mouse_click(event,x,y,flags,param):
 
-    global start_clicked, close_clicked, game_state, recorder
+    global start_clicked, close_clicked, stop_clicked, game_state, recorder
 
     if event == cv2.EVENT_LBUTTONDOWN:
 
+        # START BUTTON
         if game_state == "menu":
             if 520 < x < 760 and 400 < y < 480:
 
@@ -59,7 +61,19 @@ def mouse_click(event,x,y,flags,param):
                 recorder = ScreenRecorder(player_name)
                 recorder.start()
 
-        if game_state == "gameover":
+
+        # STOP BUTTON DURING GAME
+        elif game_state == "playing":
+
+            if 1050 < x < 1250 and 40 < y < 110:
+
+                stop_clicked = True
+                game_state = "gameover"
+
+
+        # CLOSE BUTTON
+        elif game_state == "gameover":
+
             if 520 < x < 760 and 420 < y < 500:
                 close_clicked = True
 
@@ -112,6 +126,14 @@ while True:
 
         cv2.putText(frame,f"Time: {remaining}",(40,120),
                     cv2.FONT_HERSHEY_SIMPLEX,1.2,(0,255,255),3)
+
+
+        # STOP BUTTON
+        cv2.rectangle(frame,(1050,40),(1250,110),(0,0,255),-1)
+
+        cv2.putText(frame,"STOP",(1100,90),
+                    cv2.FONT_HERSHEY_SIMPLEX,1,
+                    (255,255,255),3)
 
 
     # GAME OVER

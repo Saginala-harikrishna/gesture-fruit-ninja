@@ -4,7 +4,13 @@ import time
 import math
 import pygame
 
-pygame.mixer.init()
+pygame.mixer.init(
+    frequency=44100,
+    size=-16,
+    channels=2,
+    buffer=512,
+    devicename="CABLE Input (VB-Audio Virtual Cable)"
+)
 
 slice_sound = pygame.mixer.Sound("assets/sounds/slice.wav")
 explosion_sound = pygame.mixer.Sound("assets/sounds/explosion.wav")
