@@ -1,6 +1,11 @@
 {
     "fruit_ninja": [
         {
+            "name": "jony",
+            "phone": "8956",
+            "score": 47
+        },
+        {
             "name": "motish",
             "phone": "5648971230",
             "score": 30
@@ -51,6 +56,11 @@
             "score": 11
         },
         {
+            "name": "re",
+            "phone": "w",
+            "score": 8
+        },
+        {
             "name": "hgg",
             "phone": "8956231",
             "score": 5
@@ -62,6 +72,11 @@
         },
         {
             "name": "lai",
+            "phone": "78",
+            "score": 4
+        },
+        {
+            "name": "jagu",
             "phone": "78",
             "score": 4
         },
@@ -91,14 +106,19 @@
             "score": 0
         },
         {
+            "name": "jk",
+            "phone": "78995462132",
+            "score": 0
+        },
+        {
             "name": "n",
             "phone": "45",
             "score": -1
         },
         {
-            "name": "jony",
-            "phone": "8956",
-            "score": 47
+            "name": "kk",
+            "phone": "7207859539",
+            "score": 20
         }
     ]
 }

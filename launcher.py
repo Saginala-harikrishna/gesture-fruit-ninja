@@ -91,6 +91,11 @@ class GameLauncher(ctk.CTk):
             size=(220,140)
         )
 
+        img2 = ctk.CTkImage(
+            light_image=Image.open("assets/icons/racing.png"),
+        size=(220,140)
+)
+
         # fruit ninja card
         card1 = ctk.CTkButton(
             grid,
@@ -109,10 +114,12 @@ class GameLauncher(ctk.CTk):
         # coming soon card
         card2 = ctk.CTkButton(
             grid,
-            text="New Game\nComing Soon",
+            image=img2,
+            text="Gesture Racing",
+            compound="top",
             width=240,
             height=180,
-            state="disabled"
+            command=lambda:self.open_registration("racing")
         )
         card2.grid(row=0,column=1,padx=15,pady=15)
 
@@ -171,7 +178,10 @@ class GameLauncher(ctk.CTk):
         if self.player_name == "" or self.player_phone == "":
             return
 
-        subprocess.run(["python","main.py"])
+        if self.current_game == "fruit_ninja":
+            subprocess.run(["python","main.py"])
+        elif self.current_game == "racing":
+            subprocess.run(["python","racing_game/racing_main.py"])
 
         self.save_score()
 

@@ -3,6 +3,7 @@ import time
 import sys
 import json
 import ctypes
+import datetime
 
 from hand_tracking import HandTracker
 from object_manager import ObjectManager
@@ -14,6 +15,9 @@ player_name = "player"
 
 if len(sys.argv) > 1:
     player_name = sys.argv[1]
+
+# remove spaces in name for file safety
+player_name = player_name.replace(" ", "_")
 
 
 # Detect laptop screen resolution
@@ -169,7 +173,11 @@ cv2.destroyAllWindows()
 
 # Stop recording and save video
 if recorder:
-    video_name = f"{player_name}_score_{object_manager.score}.mp4"
+
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    video_name = f"{player_name}_score_{object_manager.score}_{timestamp}.mp4"
+
     recorder.stop(video_name)
 
 
