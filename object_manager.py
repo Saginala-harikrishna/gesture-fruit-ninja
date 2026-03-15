@@ -90,7 +90,7 @@ class ObjectManager:
         # faster spawn rate
         if self.current_object is None:
 
-            if self.pause_time is None or now-self.pause_time>0.5:
+            if self.pause_time is None or now-self.pause_time>0.1:
                 self.spawn_object()
 
         # update fruit halves

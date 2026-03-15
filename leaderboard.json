@@ -1,7 +1,34 @@
-[
-    {
-        "name": "hari",
-        "phone": "6304069520",
-        "score": 28
-    }
-]
+{
+    "fruit_ninja": [
+        {
+            "name": "hari",
+            "phone": "456",
+            "score": 19
+        },
+        {
+            "name": "mohan ",
+            "phone": "7894561235",
+            "score": 19
+        },
+        {
+            "name": "ui",
+            "phone": "ui",
+            "score": 18
+        },
+        {
+            "name": "hgg",
+            "phone": "8956231",
+            "score": 5
+        },
+        {
+            "name": "b",
+            "phone": "n",
+            "score": 5
+        },
+        {
+            "name": "ashok",
+            "phone": "9856231478",
+            "score": 26
+        }
+    ]
+}

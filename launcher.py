@@ -7,6 +7,9 @@ import os
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
 
+WIDTH = 1100
+HEIGHT = 650
+
 
 class GameLauncher(ctk.CTk):
 
@@ -15,105 +18,146 @@ class GameLauncher(ctk.CTk):
         super().__init__()
 
         self.title("AI Gesture Game Arena")
-        self.geometry("1000x650")
+        self.geometry(f"{WIDTH}x{HEIGHT}")
 
         self.player_name = ""
         self.player_phone = ""
+        self.current_game = None
 
-        self.create_layout()
-        self.load_leaderboard()
+        self.load_data()
+        self.build_ui()
 
     # -----------------------------
-    # UI LAYOUT
+    # LOAD DATA
     # -----------------------------
 
-    def create_layout(self):
+    def load_data(self):
+
+        if not os.path.exists("leaderboard.json"):
+            self.data = {"fruit_ninja":[]}
+            self.save_data()
+        else:
+            with open("leaderboard.json") as f:
+                self.data = json.load(f)
+
+    def save_data(self):
+
+        with open("leaderboard.json","w") as f:
+            json.dump(self.data,f,indent=4)
+
+    # -----------------------------
+    # BUILD UI
+    # -----------------------------
+
+    def build_ui(self):
 
         title = ctk.CTkLabel(
             self,
             text="AI Gesture Game Arena",
             font=("Arial",30,"bold")
         )
-        title.pack(pady=20)
+        title.pack(pady=15)
 
-        container = ctk.CTkFrame(self)
-        container.pack(fill="both", expand=True, padx=20, pady=10)
+        main = ctk.CTkFrame(self)
+        main.pack(fill="both", expand=True, padx=20, pady=10)
 
-        container.grid_columnconfigure(0, weight=1)
-        container.grid_columnconfigure(1, weight=1)
+        main.grid_columnconfigure(0, weight=1)
+        main.grid_columnconfigure(1, weight=1)
 
-        self.create_game_cards(container)
-        self.create_leaderboard(container)
+        self.build_games_section(main)
+        self.build_leaderboard(main)
 
     # -----------------------------
     # GAME CARDS
     # -----------------------------
 
-    def create_game_cards(self, parent):
+    def build_games_section(self,parent):
 
-        card_frame = ctk.CTkFrame(parent)
-        card_frame.grid(row=0, column=0, padx=20, pady=10, sticky="nsew")
+        games = ctk.CTkFrame(parent)
+        games.grid(row=0,column=0,padx=15,sticky="nsew")
 
         label = ctk.CTkLabel(
-            card_frame,
-            text="Available Games",
+            games,
+            text="Games",
             font=("Arial",22,"bold")
         )
         label.pack(pady=10)
+
+        grid = ctk.CTkFrame(games)
+        grid.pack()
 
         img = ctk.CTkImage(
             light_image=Image.open("assets/icons/fruit_ninja.png"),
             size=(220,140)
         )
 
-        card = ctk.CTkButton(
-            card_frame,
+        # fruit ninja card
+        card1 = ctk.CTkButton(
+            grid,
             image=img,
             text="Gesture Fruit Ninja",
             compound="top",
-            height=180,
             width=240,
-            command=self.open_registration
+            height=180,
+            command=lambda:self.open_registration("fruit_ninja")
         )
-        card.pack(pady=20)
+        card1.grid(row=0,column=0,padx=15,pady=15)
+
+        card1.bind("<Enter>", lambda e: card1.configure(width=250,height=190))
+        card1.bind("<Leave>", lambda e: card1.configure(width=240,height=180))
+
+        # coming soon card
+        card2 = ctk.CTkButton(
+            grid,
+            text="New Game\nComing Soon",
+            width=240,
+            height=180,
+            state="disabled"
+        )
+        card2.grid(row=0,column=1,padx=15,pady=15)
+
+        # registration panel
+        self.registration_frame = ctk.CTkFrame(games)
+        self.registration_frame.pack(pady=20)
 
     # -----------------------------
-    # PLAYER REGISTRATION
+    # REGISTRATION
     # -----------------------------
 
-    def open_registration(self):
+    def open_registration(self,game):
 
-        self.popup = ctk.CTkToplevel(self)
-        self.popup.title("Player Registration")
-        self.popup.geometry("350x300")
+        self.current_game = game
 
-        label = ctk.CTkLabel(
-            self.popup,
+        for widget in self.registration_frame.winfo_children():
+            widget.destroy()
+
+        title = ctk.CTkLabel(
+            self.registration_frame,
             text="Enter Player Details",
             font=("Arial",18,"bold")
         )
-        label.pack(pady=20)
+        title.pack(pady=10)
 
         self.name_entry = ctk.CTkEntry(
-            self.popup,
+            self.registration_frame,
             placeholder_text="Player Name",
             width=250
         )
-        self.name_entry.pack(pady=10)
+        self.name_entry.pack(pady=5)
 
         self.phone_entry = ctk.CTkEntry(
-            self.popup,
+            self.registration_frame,
             placeholder_text="Phone Number",
             width=250
         )
-        self.phone_entry.pack(pady=10)
+        self.phone_entry.pack(pady=5)
 
         start_btn = ctk.CTkButton(
-            self.popup,
+            self.registration_frame,
             text="Start Game",
             command=self.start_game
         )
-        start_btn.pack(pady=20)
+        start_btn.pack(pady=10)
 
     # -----------------------------
     # START GAME
@@ -127,9 +171,7 @@ class GameLauncher(ctk.CTk):
         if self.player_name == "" or self.player_phone == "":
             return
 
-        self.popup.destroy()
-
-        subprocess.run(["python", "main.py"])
+        subprocess.run(["python","main.py"])
 
         self.save_score()
 
@@ -143,73 +185,78 @@ class GameLauncher(ctk.CTk):
             return
 
         with open("last_score.json") as f:
-            data = json.load(f)
+            score_data = json.load(f)
 
-        score = data["score"]
+        score = score_data["score"]
 
-        if os.path.exists("leaderboard.json"):
-
-            with open("leaderboard.json") as f:
-                leaderboard = json.load(f)
-        else:
-            leaderboard = []
-
-        leaderboard.append({
-            "name": self.player_name,
-            "phone": self.player_phone,
-            "score": score
+        self.data[self.current_game].append({
+            "name":self.player_name,
+            "phone":self.player_phone,
+            "score":score
         })
 
-        with open("leaderboard.json", "w") as f:
-            json.dump(leaderboard, f, indent=4)
-
-        self.load_leaderboard()
+        self.save_data()
+        self.refresh_leaderboard()
 
     # -----------------------------
     # LEADERBOARD
     # -----------------------------
 
-    def create_leaderboard(self, parent):
+    def build_leaderboard(self,parent):
 
-        board_frame = ctk.CTkFrame(parent)
-        board_frame.grid(row=0, column=1, padx=20, pady=10, sticky="nsew")
+        board = ctk.CTkFrame(parent)
+        board.grid(row=0,column=1,padx=15,sticky="nsew")
 
         label = ctk.CTkLabel(
-            board_frame,
+            board,
             text="Leaderboard",
             font=("Arial",22,"bold")
         )
         label.pack(pady=10)
 
-        self.table = ctk.CTkTextbox(
-            board_frame,
+        self.board_box = ctk.CTkTextbox(
+            board,
             width=420,
-            height=420,
+            height=450,
             font=("Courier",14)
         )
-        self.table.pack(pady=10)
+        self.board_box.pack(pady=10)
 
-    def load_leaderboard(self):
+        self.refresh_leaderboard()
 
-        self.table.delete("1.0", "end")
+    def refresh_leaderboard(self):
 
-        if not os.path.exists("leaderboard.json"):
-            return
+        self.board_box.delete("1.0","end")
 
-        with open("leaderboard.json") as f:
-            data = json.load(f)
+        for game,players in self.data.items():
 
-        data.sort(key=lambda x: x["score"], reverse=True)
+            self.board_box.insert("end",f"\n{game.upper()}\n")
+            self.board_box.insert("end","-"*40+"\n")
 
-        header = f"{'Rank':<6}{'Name':<15}{'Phone':<15}{'Score':<6}\n"
-        self.table.insert("end", header)
-        self.table.insert("end", "-"*45 + "\n")
+            players.sort(key=lambda x:x["score"],reverse=True)
 
-        for i, player in enumerate(data[:10]):
+            trophies = ["🥇","🥈","🥉"]
 
-            line = f"{i+1:<6}{player['name']:<15}{player['phone']:<15}{player['score']:<6}\n"
+            for i,p in enumerate(players[:3]):
 
-            self.table.insert("end", line)
+                line = f"{trophies[i]} {p['name']} | {p['phone']} | {p['score']}\n"
+
+                self.board_box.insert("end",line)
+
+        self.animate_scores()
+
+    # -----------------------------
+    # SCORE ANIMATION
+    # -----------------------------
+
+    def animate_scores(self):
+
+        text = self.board_box.get("1.0","end")
+        self.board_box.delete("1.0","end")
+
+        for i,char in enumerate(text):
+
+            self.after(i*5,lambda c=char:self.board_box.insert("end",c))
 
 
 app = GameLauncher()
