@@ -40,8 +40,23 @@ road=pygame.transform.scale(road,(WIDTH,GAME_HEIGHT))
 car_img=pygame.image.load("assets/racing/player_car.png").convert_alpha()
 car_img=pygame.transform.scale(car_img,(80,120))
 
-traffic_img=pygame.image.load("assets/racing/traffic_car.png").convert_alpha()
-traffic_img=pygame.transform.scale(traffic_img,(70,110))
+# MULTIPLE TRAFFIC CARS
+traffic_car1 = pygame.image.load("assets/racing/traffic_car.png").convert_alpha()
+traffic_car2 = pygame.image.load("assets/racing/traffic_car2.png").convert_alpha()
+traffic_car3 = pygame.image.load("assets/racing/traffic_car3.png").convert_alpha()
+traffic_car4 = pygame.image.load("assets/racing/traffic_car4.png").convert_alpha()
+traffic_car6 = pygame.image.load("assets/racing/traffic_car6.png").convert_alpha()
+
+traffic_car1 = pygame.transform.scale(traffic_car1,(70,110))
+traffic_car2 = pygame.transform.scale(traffic_car2,(70,110))
+traffic_car3 = pygame.transform.scale(traffic_car3,(70,110))
+traffic_car4 = pygame.transform.scale(traffic_car4,(70,110))
+traffic_car6 = pygame.transform.scale(traffic_car6,(70,110))
+
+
+
+
+traffic_images = [traffic_car1,traffic_car2,traffic_car3,traffic_car4,traffic_car6]
 
 steering_img=pygame.image.load("assets/racing/steering.png").convert_alpha()
 steering_img=pygame.transform.scale(steering_img,(120,120))
@@ -67,15 +82,25 @@ base_speed=11
 
 # ---------- PLAYER ----------
 
-car_x=WIDTH//2
+LEFT_BOUND=250
+RIGHT_BOUND=WIDTH-250
+
+LANE_WIDTH=(RIGHT_BOUND-LEFT_BOUND)/5
+
+lanes=[
+LEFT_BOUND+LANE_WIDTH*0.5,
+LEFT_BOUND+LANE_WIDTH*1.5,
+LEFT_BOUND+LANE_WIDTH*2.5,
+LEFT_BOUND+LANE_WIDTH*3.5,
+LEFT_BOUND+LANE_WIDTH*4.5
+]
+
+car_x=lanes[2]   # start in lane 3
 car_y=GAME_HEIGHT-150
 
 velocity=0
 steer_raw=0
 steer_smooth=0
-
-LEFT_BOUND=250
-RIGHT_BOUND=WIDTH-250
 
 distance=0
 score=0
@@ -92,18 +117,25 @@ spawn_timer=0
 recorder=None
 recording_stopped=False
 
+# ---------- SPAWN TRAFFIC ----------
+
 def spawn_car():
 
-    lane=random.choices(["left","right"],weights=[70,30])[0]
+    lane=random.randint(0,4)
+    x=lanes[lane]
 
-    if lane=="left":
-        x=WIDTH//2-80
-        sp=random.randint(7,9)
-    else:
-        x=WIDTH//2+80
-        sp=random.randint(4,6)
+    img=random.choice(traffic_images)
 
-    traffic.append({"x":x,"y":-120,"speed":sp,"lane":lane,"counted":False})
+    speed=random.randint(6,10)
+
+    traffic.append({
+        "x":x,
+        "y":-120,
+        "speed":speed,
+        "img":img,
+        "lane":lane,
+        "counted":False
+    })
 
 crash_timer=0
 
@@ -221,7 +253,7 @@ while running:
 
         spawn_timer+=1
 
-        if spawn_timer>90:
+        if spawn_timer>70:
             spawn_car()
             spawn_timer=0
 
@@ -231,7 +263,7 @@ while running:
 
             car["y"]+=car["speed"]
 
-            car_rect=pygame.Rect(car["x"]+20,car["y"]+30,30,50)
+            car_rect=pygame.Rect(car["x"]-20,car["y"]-30,40,60)
 
             if player_rect.colliderect(car_rect):
 
@@ -245,15 +277,14 @@ while running:
 
         traffic=[c for c in traffic if c["y"]<HEIGHT]
 
-        if distance>=200:
+        if distance>=800:
 
             game_finished=True
             engine_sound.stop()
 
             if recorder and not recording_stopped:
 
-                file_name = f"{player_name}_{score}_{int(time.time())}.mp4"
-                recorder.stop(file_name)
+                recorder.stop()
 
                 recording_stopped=True
 
@@ -262,8 +293,29 @@ while running:
     screen.blit(road,(0,road_y1))
     screen.blit(road,(0,road_y2))
 
+    # CENTER LANE DASH
     for i in range(-40,GAME_HEIGHT,40):
         pygame.draw.rect(screen,(255,255,255),(WIDTH//2-5,i+lane_offset,10,20))
+
+    # BOUNDARY CIRCLE MARKERS
+    # BOUNDARY STRAIGHT LINES
+    boundary_offset = 25   # move line slightly outward
+
+    pygame.draw.line(
+        screen,
+        (255, 0, 0),
+        (LEFT_BOUND - boundary_offset, 0),
+        (LEFT_BOUND - boundary_offset, GAME_HEIGHT),
+        12
+    )
+
+    pygame.draw.line(
+        screen,
+        (255, 0, 0),
+        (RIGHT_BOUND + boundary_offset, 0),
+        (RIGHT_BOUND + boundary_offset, GAME_HEIGHT),
+        12
+    )
 
     rotation=velocity*-60
     rotation=max(-15,min(15,rotation))
@@ -273,7 +325,7 @@ while running:
     screen.blit(car,rect)
 
     for car in traffic:
-        screen.blit(traffic_img,(car["x"],car["y"]))
+        screen.blit(car["img"],(car["x"]-35,car["y"]-55))
 
     if crash_timer>0:
         screen.blit(crash_img,(car_x-60,car_y-60))

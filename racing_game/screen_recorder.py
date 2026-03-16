@@ -1,7 +1,6 @@
 import subprocess
 import os
 import time
-import shutil
 
 
 class ScreenRecorder:
@@ -10,7 +9,6 @@ class ScreenRecorder:
 
         self.player_name = player_name
         self.process = None
-        self.temp_file = "temp_recording.mp4"
 
         self.output_folder = "race_recordings"
 
@@ -20,7 +18,15 @@ class ScreenRecorder:
         # Update if your ffmpeg path changes
         self.ffmpeg_path = r"C:\Users\kriha\Downloads\ffmpeg-2026-03-12-git-9dc44b43b2-essentials_build\ffmpeg-2026-03-12-git-9dc44b43b2-essentials_build\bin\ffmpeg.exe"
 
+        self.output_file = None
+
     def start(self):
+
+        timestamp = int(time.time())
+        self.output_file = os.path.join(
+            self.output_folder,
+            f"{self.player_name}_{timestamp}.mp4"
+        )
 
         command = [
 
@@ -32,7 +38,9 @@ class ScreenRecorder:
             # VIDEO
             "-f", "gdigrab",
             "-framerate", "30",
-            "-i", "desktop",
+            "-draw_mouse", "0",
+            "-video_size", "900x700",
+            "-i", "title=Gesture Racing",
 
             # AUDIO
             "-thread_queue_size", "512",
@@ -49,7 +57,9 @@ class ScreenRecorder:
             "-c:a", "aac",
             "-b:a", "192k",
 
-            self.temp_file
+            "-movflags", "+faststart",
+
+            self.output_file
         ]
 
         print("Recording started")
@@ -61,7 +71,7 @@ class ScreenRecorder:
             stderr=subprocess.DEVNULL
         )
 
-    def stop(self, final_name):
+    def stop(self):
 
         if self.process:
 
@@ -71,25 +81,15 @@ class ScreenRecorder:
 
                 self.process.stdin.write(b"q")
                 self.process.stdin.flush()
+                self.process.stdin.close()
 
                 self.process.wait()
 
-                time.sleep(2)
+                print("Recording saved successfully")
+                print("Saved to:", self.output_file)
 
             except Exception as e:
                 print("Error stopping ffmpeg:", e)
 
-        if os.path.exists(self.temp_file):
-
-            final_path = os.path.join(self.output_folder, final_name)
-
-            try:
-
-                shutil.move(self.temp_file, final_path)
-
-                print("Recording saved successfully")
-                print("Saved to:", final_path)
-
-            except Exception as e:
-
-                print("Error saving recording:", e)
+            finally:
+                self.process = None

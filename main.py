@@ -34,7 +34,7 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT,720)
 hand_tracker = HandTracker()
 object_manager = ObjectManager()
 
-game_duration = 60
+game_duration = 90
 
 cv2.namedWindow("Gesture Fruit Ninja", cv2.WINDOW_NORMAL)
 cv2.resizeWindow("Gesture Fruit Ninja", screen_width, screen_height)
